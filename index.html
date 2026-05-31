@@ -88,6 +88,22 @@
   </main>
 
   <script>
+    // ── Step 4: Custom Error Types ──────────────────────────────────────────
+    class ValidationError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+      }
+    }
+
+    class DivisionByZeroError extends Error {
+      constructor(message = 'Cannot divide by zero') {
+        super(message);
+        this.name = 'DivisionByZeroError';
+      }
+    }
+
+    // ── Step 3: Calculator with try / catch / finally ───────────────────────
     let form = document.querySelector('form');
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -95,13 +111,169 @@
       let firstNum = document.querySelector('#first-num').value;
       let secondNum = document.querySelector('#second-num').value;
       let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      try {
+        if (firstNum === '' || secondNum === '') {
+          throw new ValidationError('Both fields must be filled in');
+        }
+
+        let a = parseFloat(firstNum);
+        let b = parseFloat(secondNum);
+
+        if (isNaN(a) || isNaN(b)) {
+          throw new ValidationError('Inputs must be valid numbers');
+        }
+
+        if (operator === '/' && b === 0) {
+          throw new DivisionByZeroError();
+        }
+
+        let result;
+        switch (operator) {
+          case '+': result = a + b; break;
+          case '-': result = a - b; break;
+          case '*': result = a * b; break;
+          case '/': result = a / b; break;
+        }
+
+        output.innerHTML = result;
+
+      } catch (err) {
+        if (err instanceof DivisionByZeroError) {
+          output.innerHTML = `Error: ${err.message}`;
+          console.error(`[${err.name}]`, err.message);
+        } else if (err instanceof ValidationError) {
+          output.innerHTML = `Validation: ${err.message}`;
+          console.warn(`[${err.name}]`, err.message);
+        } else {
+          output.innerHTML = 'An unexpected error occurred';
+          console.error('Unexpected error:', err);
+        }
+      } finally {
+        console.log('Calculation attempt completed.');
+      }
     });
 
+    // ── Step 5: Global Error Handler ────────────────────────────────────────
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.log(
+        `[window.onerror] Global error caught: "${message}" ` +
+        `at ${source} line ${lineno}:${colno}`
+      );
+      return true; // suppress the browser's default error output
+    };
+
+    // ── Step 2: Console-method buttons ──────────────────────────────────────
     let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
 
-    // Start your code here
-    // You may move this JS to another file if you wish
+    // [0] Console Log
+    errorBtns[0].addEventListener('click', () => {
+      console.log('Console Log Demo:', { name: 'Lab 9', topic: 'Error Handling', year: 2026 });
+    });
+
+    // [1] Console Error
+    errorBtns[1].addEventListener('click', () => {
+      console.error('Console Error Demo: Something went wrong!', new Error('Sample error object'));
+    });
+
+    // [2] Console Count
+    errorBtns[2].addEventListener('click', () => {
+      console.count('button-click');
+      console.count('button-click');
+      console.count('other-event');
+    });
+
+    // [3] Console Warn
+    errorBtns[3].addEventListener('click', () => {
+      console.warn('Console Warn Demo: This feature will be removed in a future version.');
+    });
+
+    // [4] Console Assert
+    errorBtns[4].addEventListener('click', () => {
+      const value = 5;
+      // fails → message appears in console
+      console.assert(value > 10, 'Assert Demo: expected value > 10, but got', value);
+      // passes → no output
+      console.assert(value < 10, 'This line should NOT appear because the assertion passes');
+    });
+
+    // [5] Console Clear
+    errorBtns[5].addEventListener('click', () => {
+      console.clear();
+    });
+
+    // [6] Console Dir
+    errorBtns[6].addEventListener('click', () => {
+      const btn = document.querySelector('#error-btns > button');
+      console.log('Console Dir Demo — inspecting the first button element:');
+      console.dir(btn);
+    });
+
+    // [7] Console DirXML
+    errorBtns[7].addEventListener('click', () => {
+      console.log('Console DirXML Demo — viewing the <form> as an HTML/XML tree:');
+      console.dirxml(document.querySelector('form'));
+    });
+
+    // [8] Console Group Start
+    errorBtns[8].addEventListener('click', () => {
+      console.group('Calculator Input Details');
+        console.log('First Number:',  document.querySelector('#first-num').value || '(empty)');
+        console.log('Operator:',      document.querySelector('#operator').value);
+        console.log('Second Number:', document.querySelector('#second-num').value || '(empty)');
+        console.groupCollapsed('Nested: DOM References');
+          console.log('form element:',   document.querySelector('form'));
+          console.log('output element:', document.querySelector('output'));
+        console.groupEnd(); // closes nested groupCollapsed
+      // outer group is left open for the "Console Group End" button to close
+    });
+
+    // [9] Console Group End
+    errorBtns[9].addEventListener('click', () => {
+      console.groupEnd();
+      console.log('Outer group ended.');
+    });
+
+    // [10] Console Table
+    errorBtns[10].addEventListener('click', () => {
+      const operators = [
+        { symbol: '+', name: 'Addition',       example: '2 + 3 = 5'  },
+        { symbol: '-', name: 'Subtraction',    example: '5 - 2 = 3'  },
+        { symbol: '*', name: 'Multiplication', example: '3 * 4 = 12' },
+        { symbol: '/', name: 'Division',       example: '10 / 2 = 5' },
+      ];
+      console.log('Console Table Demo:');
+      console.table(operators);
+    });
+
+    // [11] Start Timer
+    errorBtns[11].addEventListener('click', () => {
+      console.log('Timer started — click "End Timer" to stop it.');
+      console.time('demo-timer');
+    });
+
+    // [12] End Timer
+    errorBtns[12].addEventListener('click', () => {
+      console.timeEnd('demo-timer');
+    });
+
+    // [13] Console Trace
+    errorBtns[13].addEventListener('click', () => {
+      function thirdLevel()  { console.trace('Console Trace Demo'); }
+      function secondLevel() { thirdLevel(); }
+      function firstLevel()  { secondLevel(); }
+      firstLevel();
+    });
+
+    // [14] Trigger a Global Error (caught by window.onerror above)
+    // setTimeout lets the error escape any surrounding try/catch so it becomes
+    // a genuine uncaught error that window.onerror intercepts.
+    errorBtns[14].addEventListener('click', () => {
+      setTimeout(() => {
+        const obj = undefined;
+        obj.triggerGlobalError(); // TypeError: Cannot read properties of undefined
+      }, 0);
+    });
   </script>
 </body>
 
